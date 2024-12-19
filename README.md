@@ -34,7 +34,7 @@ cd your_project
 ### Обновление данных (запуск скрапера вручную)
 Если нужно обновить данные в базе, выполните следующую команду:
 ```bash
-docker-compose exec web flask 
+docker-compose exec web flask scrape-events
 ```
 
 ## Как работает проект
