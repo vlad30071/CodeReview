@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="БДТ" content="width=device-width, initial-scale=1.0">
+    <title>Билеты в Братский драматический театр</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        .filters {
+            margin-bottom: 20px;
+        }
+
+        .filters input,
+        .filters button {
+            padding: 10px;
+            margin-right: 10px;
+            font-size: 16px;
+        }
+
+        .filters label {
+            font-size: 16px;
+            margin-left: 10px;
+        }
+
+        .event-card {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .event-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .event-description {
+            margin-bottom: 10px;
+            font-size: 16px;
+            color: #555;
+        }
+
+        .event-dates {
+            font-size: 14px;
+            color: #777;
+            margin-top: 10px;
+        }
+
+        .event-date {
+            margin-bottom: 10px;
+        }
+
+        .no-events {
+            font-size: 18px;
+            color: #888;
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+    <script>
+        async function loadEvents() {
+            const filterName = document.getElementById('filter-name')?.value || '';
+            const filterDate = document.getElementById('filter-date')?.value || '';
+            const filterTickets = document.getElementById('filter-tickets')?.checked;
+
+            const url = `/get_events?filter_name=${filterName}&filter_date=${filterDate}&filter_tickets=${filterTickets}`;
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error("Ошибка при загрузке событий");
+
+                const data = await response.json();
+                const container = document.getElementById('events-container');
+                container.innerHTML = '';
+
+                if (data.events.length === 0) {
+                    container.innerHTML = '<div class="no-events">События не найдены.</div>';
+                    return;
+                }
+
+                data.events.forEach(event => {
+                    let datesHtml = '';
+
+                    Object.entries(event.dates).forEach(([date, sessions]) => {
+                        const uniqueSessions = Array.from(new Set(sessions.map(
+                            session => `${session.time} - ${session.ticket_status}`
+                        )));
+
+                        let sessionsHtml = uniqueSessions.map(
+                            session => `<li>${session}</li>`
+                        ).join('');
+
+                        datesHtml += `
+                            <div class="event-date">
+                                <strong>${date}</strong>
+                                <ul>${sessionsHtml}</ul>
+                            </div>
+                        `;
+                    });
+
+                    const card = `
+                        <div class="event-card">
+                            <h2 class="event-title">${event.title || 'Нет названия'}</h2>
+                            <p class="event-description">${event.description || 'Нет описания'}</p>
+                            <div class="event-dates"><strong>Даты:</strong>${datesHtml || 'Нет доступных дат'}</div>
+                        </div>
+                    `;
+                    container.innerHTML += card;
+                });
+            } catch (error) {
+                console.error("Ошибка при загрузке событий:", error);
+                const container = document.getElementById('events-container');
+                container.innerHTML = '<div class="no-events">Не удалось загрузить события. Попробуйте позже.</div>';
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            loadEvents();
+        });
+    </script>
+</head>
+
+<body>
+    <h1>Билеты в Братский драматический театр</h1>
+
+    <div class="filters">
+        <input type="text" id="filter-name" placeholder="Название события" />
+        <input type="date" id="filter-date" />
+        <label>
+            <input type="checkbox" id="filter-tickets" /> Только с билетами
+        </label>
+        <button onclick="loadEvents()">Применить фильтры</button>
+    </div>
+
+    <div id="events-container"></div>
+</body>
+
+</html>
